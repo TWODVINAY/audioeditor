@@ -9,7 +9,6 @@ import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
-// Dynamically load FFmpeg to ensure it runs on the client
 const FFmpegLoader = dynamic(
   () => import('@ffmpeg/ffmpeg').then((mod) => mod.FFmpeg),
   { 
@@ -19,7 +18,6 @@ const FFmpegLoader = dynamic(
 );
 
 export default function GenerateMusicPage() {
-  // Audio-related states
   const [audioFile, setAudioFile] = useState(null);
   const [audioContext, setAudioContext] = useState(null);
   const [sourceNode, setSourceNode] = useState(null);
@@ -28,24 +26,17 @@ export default function GenerateMusicPage() {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [audioBuffer, setAudioBuffer] = useState(null);
-
-  // Tone.js effects and trim parameters
   const [echoDelay, setEchoDelay] = useState(0.3);       
   const [echoFeedback, setEchoFeedback] = useState(0.5);   
   const [reverbDecay, setReverbDecay] = useState(1.5);     
   const [reverbPreDelay, setReverbPreDelay] = useState(0.01);
   const [trimStart, setTrimStart] = useState(0);           
   const [trimEnd, setTrimEnd] = useState(0);               
-
-  // FFmpeg states and refs for animation and timing
   const [ffmpegLoaded, setFfmpegLoaded] = useState(false);
   const ffmpegRef = useRef(null);
   const startTimeRef = useRef(0);
   const rafIdRef = useRef(null);
 
-  
-
-  // Initialize AudioContext and load FFmpeg WASM
   useEffect(() => {
     const initAudioContext = async () => {
       const context = new AudioContext();
@@ -76,7 +67,6 @@ export default function GenerateMusicPage() {
     };
   }, []);
 
-  // Handle file upload and decode audio
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file || !audioContext) return;
@@ -84,7 +74,6 @@ export default function GenerateMusicPage() {
     const arrayBuffer = await file.arrayBuffer();
     const decodedBuffer = await audioContext.decodeAudioData(arrayBuffer);
     
-    // Ensure we have at least 2 channels
     let safeBuffer = decodedBuffer;
     if (decodedBuffer.numberOfChannels < 1) {
       const newBuffer = audioContext.createBuffer(2, decodedBuffer.length, decodedBuffer.sampleRate);
@@ -96,10 +85,9 @@ export default function GenerateMusicPage() {
     
     setAudioBuffer(safeBuffer);
     setDuration(safeBuffer.duration);
-    setTrimEnd(safeBuffer.duration); // default trim end = full duration
+    setTrimEnd(safeBuffer.duration); 
   };
 
-  // Simple play/pause using the native AudioContext
   const handlePlayPause = async () => {
     if (!audioContext || !audioBuffer) return;
     if (isPlaying) {
@@ -131,7 +119,6 @@ export default function GenerateMusicPage() {
     }
   };
 
-  // Handle changes for playback speed and effect parameters
   const handleSpeedChange = (e) => {
     const newRate = parseFloat(e.target.value);
     setPlaybackRate(newRate);
@@ -145,11 +132,9 @@ export default function GenerateMusicPage() {
   const handleTrimStartChange = (e) => setTrimStart(parseFloat(e.target.value));
   const handleTrimEndChange = (e) => setTrimEnd(parseFloat(e.target.value));
 
-  // Process the audio offline using Tone.js and convert to MP3 with FFmpeg
   const handleDownload = async () => {
     if (!audioBuffer || !ffmpegLoaded || !audioContext) return;
     
-    // Validate trim values
     const tStart = Math.max(0, trimStart);
     const tEnd = Math.min(duration, trimEnd);
     if (tEnd <= tStart) {
@@ -161,7 +146,6 @@ export default function GenerateMusicPage() {
     let renderedBuffer;
     try {
       renderedBuffer = await Tone.Offline(async (offlineContext) => {
-        // Create Tone.js buffer and player with effects
         const toneBuffer = new Tone.Buffer(audioBuffer);
         const player = new Tone.Player({
           url: toneBuffer,
@@ -187,7 +171,6 @@ export default function GenerateMusicPage() {
       return;
     }
     
-    // Convert the rendered AudioBuffer to WAV and then to MP3 using FFmpeg WASM
     const wavData = audioBufferToWav(renderedBuffer);
     const wavBlob = new Blob([wavData], { type: 'audio/wav' });
     const ffmpeg = ffmpegRef.current;
@@ -197,7 +180,6 @@ export default function GenerateMusicPage() {
     const outputBlob = new Blob([data], { type: 'audio/mpeg' });
     const url = URL.createObjectURL(outputBlob);
     
-    // Trigger the download
     const a = document.createElement('a');
     a.href = url;
     a.download = `processed_${playbackRate}x.mp3`;
@@ -207,7 +189,6 @@ export default function GenerateMusicPage() {
     URL.revokeObjectURL(url);
   };
 
-  // Format seconds into minutes:seconds
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const remaining = Math.floor(seconds % 60);
@@ -251,7 +232,6 @@ export default function GenerateMusicPage() {
                   </span>
                 </div>
 
-                {/* Playback Speed Control */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Playback Speed: {playbackRate}x
@@ -267,7 +247,6 @@ export default function GenerateMusicPage() {
                   />
                 </div>
 
-                {/* Echo Controls */}
                 <fieldset className="border p-4 rounded-md">
                   <legend className="text-base font-medium text-gray-800">
                     Echo Effects
@@ -304,7 +283,6 @@ export default function GenerateMusicPage() {
                   </div>
                 </fieldset>
 
-                {/* Reverb Controls */}
                 <fieldset className="border p-4 rounded-md">
                   <legend className="text-base font-medium text-gray-800">
                     Reverb Effects
@@ -341,7 +319,6 @@ export default function GenerateMusicPage() {
                   </div>
                 </fieldset>
 
-                {/* Trim Controls */}
                 <fieldset className="border p-4 rounded-md">
                   <legend className="text-base font-medium text-gray-800">
                     Trim Audio

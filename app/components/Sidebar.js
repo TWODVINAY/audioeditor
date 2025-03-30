@@ -4,8 +4,6 @@ import { usePathname } from 'next/navigation';
 
 export default function Sidebar() {
   const pathname = usePathname();
-
-  // Navigation items with href and label.
   const navItems = [
     { href: '/my-music', label: 'My Music' },
     { href: '/generate-music', label: 'Generate Music' },
@@ -18,7 +16,6 @@ export default function Sidebar() {
       <div className="navigiation">
         <ul className="space-y-12">
           {navItems.map((item, index) => {
-            // Determine if the current route matches the nav item.
             const isActive = pathname === item.href;
             return (
               <li key={index}>
@@ -39,7 +36,6 @@ export default function Sidebar() {
         </ul>
       </div>
       <div className="btm-nav">
-        {/* Additional bottom navigation or info can go here */}
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-// app/components/Navbar.js
+
 'use client';
 import logo from '../../public/vercel.svg'
 export default function Navbar() {

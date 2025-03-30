@@ -1,5 +1,4 @@
 'use client';
-
 import { useState, useRef, useEffect } from "react";
 import * as Tone from "tone";
 import { toBlobURL } from '@ffmpeg/util';
@@ -11,10 +10,7 @@ import Footer from "../components/Footer";
 
 const FFmpegLoader = dynamic(
   () => import('@ffmpeg/ffmpeg').then((mod) => mod.FFmpeg),
-  { 
-    ssr: false,
-    loading: () => <p>Loading FFmpeg...</p>
-  }
+  { ssr: false, loading: () => <p>Loading FFmpeg...</p> }
 );
 
 export default function GenerateMusicPage() {
@@ -26,12 +22,12 @@ export default function GenerateMusicPage() {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [audioBuffer, setAudioBuffer] = useState(null);
-  const [echoDelay, setEchoDelay] = useState(0.3);       
-  const [echoFeedback, setEchoFeedback] = useState(0.5);   
-  const [reverbDecay, setReverbDecay] = useState(1.5);     
+  const [echoDelay, setEchoDelay] = useState(0.3);
+  const [echoFeedback, setEchoFeedback] = useState(0.5);
+  const [reverbDecay, setReverbDecay] = useState(1.5);
   const [reverbPreDelay, setReverbPreDelay] = useState(0.01);
-  const [trimStart, setTrimStart] = useState(0);           
-  const [trimEnd, setTrimEnd] = useState(0);               
+  const [trimStart, setTrimStart] = useState(0);
+  const [trimEnd, setTrimEnd] = useState(0);
   const [ffmpegLoaded, setFfmpegLoaded] = useState(false);
   const ffmpegRef = useRef(null);
   const startTimeRef = useRef(0);
@@ -43,7 +39,6 @@ export default function GenerateMusicPage() {
       setAudioContext(context);
     };
     initAudioContext();
-
     const loadFFmpeg = async () => {
       if (typeof window === 'undefined') return;
       const { FFmpeg } = await import('@ffmpeg/ffmpeg');
@@ -57,9 +52,7 @@ export default function GenerateMusicPage() {
       });
       setFfmpegLoaded(true);
     };
-
     loadFFmpeg();
-
     return () => {
       audioContext?.close();
       if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
@@ -73,7 +66,6 @@ export default function GenerateMusicPage() {
     setAudioFile(file);
     const arrayBuffer = await file.arrayBuffer();
     const decodedBuffer = await audioContext.decodeAudioData(arrayBuffer);
-    
     let safeBuffer = decodedBuffer;
     if (decodedBuffer.numberOfChannels < 1) {
       const newBuffer = audioContext.createBuffer(2, decodedBuffer.length, decodedBuffer.sampleRate);
@@ -82,10 +74,9 @@ export default function GenerateMusicPage() {
       }
       safeBuffer = newBuffer;
     }
-    
     setAudioBuffer(safeBuffer);
     setDuration(safeBuffer.duration);
-    setTrimEnd(safeBuffer.duration); 
+    setTrimEnd(safeBuffer.duration);
   };
 
   const handlePlayPause = async () => {
@@ -134,7 +125,6 @@ export default function GenerateMusicPage() {
 
   const handleDownload = async () => {
     if (!audioBuffer || !ffmpegLoaded || !audioContext) return;
-    
     const tStart = Math.max(0, trimStart);
     const tEnd = Math.min(duration, trimEnd);
     if (tEnd <= tStart) {
@@ -142,7 +132,6 @@ export default function GenerateMusicPage() {
       return;
     }
     const renderDuration = tEnd - tStart;
-    
     let renderedBuffer;
     try {
       renderedBuffer = await Tone.Offline(async (offlineContext) => {
@@ -152,7 +141,6 @@ export default function GenerateMusicPage() {
           playbackRate: playbackRate,
           autostart: false,
         });
-        
         const echo = new Tone.FeedbackDelay({
           delayTime: echoDelay,
           feedback: echoFeedback,
@@ -161,7 +149,6 @@ export default function GenerateMusicPage() {
           decay: reverbDecay,
           preDelay: reverbPreDelay,
         });
-        
         player.chain(echo, reverb, offlineContext.destination);
         player.start(0, tStart, renderDuration);
       }, renderDuration, 2, audioBuffer.sampleRate);
@@ -170,7 +157,6 @@ export default function GenerateMusicPage() {
       alert("Rendering error: " + err.message);
       return;
     }
-    
     const wavData = audioBufferToWav(renderedBuffer);
     const wavBlob = new Blob([wavData], { type: 'audio/wav' });
     const ffmpeg = ffmpegRef.current;
@@ -179,7 +165,6 @@ export default function GenerateMusicPage() {
     const data = await ffmpeg.readFile('output.mp3');
     const outputBlob = new Blob([data], { type: 'audio/mpeg' });
     const url = URL.createObjectURL(outputBlob);
-    
     const a = document.createElement('a');
     a.href = url;
     a.download = `processed_${playbackRate}x.mp3`;
@@ -199,7 +184,7 @@ export default function GenerateMusicPage() {
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
       <hr className="border-t border-gray-200" />
-      <div className="flex flex-1">
+      <div className="flex flex-col md:flex-row flex-1">
         <Sidebar />
         <main className="flex-1 p-6 transition-all duration-300 ease-in-out">
           <h2 className="text-3xl font-extrabold text-gray-800 mb-6 animate-fadeIn">
@@ -219,7 +204,6 @@ export default function GenerateMusicPage() {
             </div>
             {audioFile && (
               <div className="space-y-8 animate-fadeIn">
-                {/* Playback Controls */}
                 <div className="flex items-center justify-between">
                   <button
                     onClick={handlePlayPause}
@@ -231,7 +215,6 @@ export default function GenerateMusicPage() {
                     {formatTime(currentTime)} / {formatTime(duration)}
                   </span>
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Playback Speed: {playbackRate}x
@@ -246,7 +229,6 @@ export default function GenerateMusicPage() {
                     className="w-full accent-indigo-600"
                   />
                 </div>
-
                 <fieldset className="border p-4 rounded-md">
                   <legend className="text-base font-medium text-gray-800">
                     Echo Effects
@@ -282,7 +264,6 @@ export default function GenerateMusicPage() {
                     </div>
                   </div>
                 </fieldset>
-
                 <fieldset className="border p-4 rounded-md">
                   <legend className="text-base font-medium text-gray-800">
                     Reverb Effects
@@ -318,7 +299,6 @@ export default function GenerateMusicPage() {
                     </div>
                   </div>
                 </fieldset>
-
                 <fieldset className="border p-4 rounded-md">
                   <legend className="text-base font-medium text-gray-800">
                     Trim Audio
@@ -354,7 +334,6 @@ export default function GenerateMusicPage() {
                     </div>
                   </div>
                 </fieldset>
-
                 <div className="text-center">
                   <button
                     onClick={handleDownload}

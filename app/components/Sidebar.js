@@ -12,8 +12,8 @@ export default function Sidebar() {
   ];
 
   return (
-    <div className="side-bar bg-[#e395d3] p-6 border-[2px] border-[#e4dae2] rounded-2xl">
-      <div className="navigiation">
+    <>
+      <div className="hidden md:block bg-[#e395d3] p-6 border-2 border-[#e4dae2] rounded-2xl">
         <ul className="space-y-12">
           {navItems.map((item, index) => {
             const isActive = pathname === item.href;
@@ -35,8 +35,24 @@ export default function Sidebar() {
           })}
         </ul>
       </div>
-      <div className="btm-nav">
+      <div className="fixed bottom-0 left-0 right-0 md:hidden bg-[#e395d3] p-2 border-t-2 border-[#e4dae2] flex justify-around">
+        {navItems.map((item, index) => {
+          const isActive = pathname === item.href;
+          return (
+            <Link key={index} href={item.href}>
+              <button
+                className={`px-4 py-2 font-medium transition-all shadow-[3px_3px_0px_black] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] ${
+                  isActive
+                    ? 'bg-[#601951] text-[#eebde4]'
+                    : 'bg-[#eebde4] text-[#601951]'
+                }`}
+              >
+                {item.label}
+              </button>
+            </Link>
+          );
+        })}
       </div>
-    </div>
+    </>
   );
 }
